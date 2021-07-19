@@ -1,6 +1,5 @@
 package com.meta1203.taskmaster;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.StringJoiner;
@@ -8,6 +7,8 @@ import java.util.StringJoiner;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import com.meta1203.taskmaster.collections.ConcurrentArrayList;
 
 public class TaskTest {
 	private static List<String> c = Arrays.asList("first", "second", "third", "final");
@@ -19,7 +20,7 @@ public class TaskTest {
 
 	@Test
 	void chainOrder() {
-		List<String> l = new ArrayList<>(Arrays.asList("first"));
+		List<String> l = new ConcurrentArrayList<>(Arrays.asList("first"));
 		Task.execute(() -> {
 			l.add("second");
 			sleep(100);
@@ -35,7 +36,7 @@ public class TaskTest {
 
 	@Test
 	void interceptOrder() {
-		List<String> l = new ArrayList<>(Arrays.asList("first"));
+		List<String> l = new ConcurrentArrayList<>(Arrays.asList("first"));
 		Task<Void> t1 = Task.execute(() -> {l.add("second"); sleep(100);});
 		Task<Void> t2 = t1.then(() -> {sleep(100); l.add("final"); sleep(100);});
 
