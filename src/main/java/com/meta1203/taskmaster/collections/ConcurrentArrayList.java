@@ -12,6 +12,11 @@ import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
+/**
+ * @author Hunter
+ *
+ * @param <E> the type of elements in this list
+ */
 public class ConcurrentArrayList<E> extends ArrayList<E> {
 	private static final long serialVersionUID = -6104897338204207229L;
 	private ReadWriteLock lock = new ReentrantReadWriteLock();

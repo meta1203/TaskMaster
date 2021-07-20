@@ -1,5 +1,6 @@
 package com.meta1203.taskmaster;
 
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -190,7 +191,26 @@ public class Task<T> {
 	 * @param tasks A list of Tasks to wait for
 	 * @throws Throwable A potential exception that occurred while executing the Task
 	 */
-	public static void awaitAll(Consumer<GroupTaskException> handler, Task<?>... tasks) throws GroupTaskException {
+	public static void awaitAll(Consumer<GroupTaskException> handler, Task<?>... tasks) {
+		for (Task<?> t : tasks) {
+			try {
+				t.cf.get();
+			} catch (ExecutionException e) {
+				handler.accept(new GroupTaskException(t, e.getCause()));
+			} catch (InterruptedException e) {
+				handler.accept(new GroupTaskException(t, e));
+			}
+		}
+	}
+	
+	/**
+	 * Wait for all given Tasks to complete.
+	 * <p>
+	 * Allows synchronous handling of any potential exception that occurred while executing the Task
+	 * @param tasks A Collection of Tasks to wait for
+	 * @throws Throwable A potential exception that occurred while executing the Task
+	 */
+	public static void awaitAll(Consumer<GroupTaskException> handler, Collection<? extends Task<?>> tasks) {
 		for (Task<?> t : tasks) {
 			try {
 				t.cf.get();
@@ -210,7 +230,7 @@ public class Task<T> {
 	 * to be handled as a RuntimeException.
 	 * @param tasks A list of Tasks to wait for
 	 */
-	public static void awaitAllUnsafe(Task<?>... tasks) {
+	public static void awaitAllUnsafe(Task<?>... tasks) throws MultiException, RuntimeException {
 		MultiException mex = new MultiException();
 		for (Task<?> t : tasks) {
 			try {
@@ -221,7 +241,29 @@ public class Task<T> {
 				mex.addCause(new GroupTaskException(t, e));
 			}
 		}
-		mex.throwRuntimeMe();
+		mex.throwMe();
+	}
+	
+	/**
+	 * Wait for all given Tasks to complete.
+	 * <p>
+	 * Any exception that may have occurred while executing the Task will be thrown as a RuntimeException or {@link MultiException}.
+	 * Use this function if you do not expect an exception, or wish for any exceptions that occur in the Task
+	 * to be handled as a RuntimeException.
+	 * @param tasks A Collection of Tasks to wait for
+	 */
+	public static void awaitAllUnsafe(Collection<? extends Task<?>> tasks) throws MultiException, RuntimeException {
+		MultiException mex = new MultiException();
+		for (Task<?> t : tasks) {
+			try {
+				t.cf.get();
+			} catch (ExecutionException e) {
+				mex.addCause(new GroupTaskException(t, e.getCause()));
+			} catch (InterruptedException e) {
+				mex.addCause(new GroupTaskException(t, e));
+			}
+		}
+		mex.throwMe();
 	}
 
 	@Override

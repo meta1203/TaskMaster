@@ -3,6 +3,17 @@ package com.meta1203.taskmaster.collections;
 import java.util.Collection;
 import java.util.ListIterator;
 
+/**
+ * Creates a snapshot of the Collection to iterate over. Useful for concurrent access to the entirety of a Collection.
+ * <p>
+ * Caveats: <p>
+ * Creates a copy of the Collection as a {@link ConcurrentArrayList}, so uses more memory
+ * (<a href="https://www.baeldung.com/java-size-of-object#1-objects-references-and-wrapper-classes">but not 100% more, just for object references</a>)
+ * <p>
+ * Any changes to the objects in the Iterator will be reflected in the originating Collection.
+ *   
+ * @author hunterh 
+ */
 public class CopiedListIterator<E> implements ListIterator<E> {
 	private ConcurrentArrayList<E> backing;
 	private int pointer;

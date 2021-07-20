@@ -87,6 +87,55 @@ public class TaskTest {
 			System.out.println("Recovered from " + ex.getClass().getSimpleName());
 		}));
 	}
+	
+	@Test
+	void cal() {
+		System.out.println("Testing ConcurrentArrayList...");
+		List<Mutable> ml1 = new ConcurrentArrayList<>(Arrays.asList(new Mutable(1, 2l, "three"), new Mutable(3, 2l, "one"), new Mutable(3, 3l, "im a 3")));
+		Assertions.assertTrue(ml1.size() == 3);
+		
+		for (Mutable m : ml1) {
+			m.setOne(1);
+			m.setTwo(1l);
+			m.setThree("one");
+		}
+		
+		List<Integer> ml2 = new ConcurrentArrayList<>(10000);
+		List<Task<Void>> tasks = new ConcurrentArrayList<>();
+		
+		for (int x = 0; x < 10000; x++) {
+			final int y = x;
+			tasks.add(Task.execute(() -> {
+				ml2.add(y);
+				if (Math.random() * 100 < 1) System.out.print(ml2.get(ml2.size()-1) + ", ");
+			}));
+		}
+		
+		Task.awaitAllUnsafe(tasks);
+		System.out.println();
+	}
+	
+	@Test
+	void multiexception() {
+		List<Task<Void>> tasks = new ConcurrentArrayList<>();
+		tasks.add(Task.execute(() -> {
+			throw new RuntimeException("what, not butter!");
+		}));
+		tasks.add(Task.execute(() -> {
+			throw new Error("hmm...");
+		}));
+		tasks.add(Task.execute(() -> {
+			throw new RuntimeException("another exception");
+		}));
+		
+		try {
+			Task.awaitAllUnsafe(tasks);
+		} catch (MultiException ex) {
+			Assertions.assertTrue(ex.getCauses().size() == 3);
+			return;
+		}
+		Assertions.fail();
+	}
 
 	private void sleep(long millis) {
 		try {
