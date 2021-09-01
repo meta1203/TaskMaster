@@ -12,7 +12,7 @@ import java.util.ListIterator;
  * <p>
  * Any changes to the objects in the Iterator will be reflected in the originating Collection.
  *   
- * @author hunterh 
+ * @author Hunter Hancock 
  */
 public class CopiedListIterator<E> implements ListIterator<E> {
 	private ConcurrentArrayList<E> backing;

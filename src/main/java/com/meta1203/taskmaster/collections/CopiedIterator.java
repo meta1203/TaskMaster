@@ -12,7 +12,7 @@ import java.util.Iterator;
  * <p>
  * Any changes to the objects in the Iterator will be reflected in the originating Collection.
  *   
- * @author hunterh 
+ * @author Hunter Hancock 
  */
 public class CopiedIterator<E> implements Iterator<E> {
 	private Object[] internal;

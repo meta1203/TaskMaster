@@ -20,17 +20,61 @@ import java.util.function.UnaryOperator;
 public class ConcurrentArrayList<E> extends ArrayList<E> {
 	private static final long serialVersionUID = -6104897338204207229L;
 	private ReadWriteLock lock = new ReentrantReadWriteLock();
+	private boolean snapshot = false;
 	
+	/**
+	 * Creates a new, empty ConcurrentArrayList
+	 * The Collection interface iterator functions return iterators synchronized to the underlying list 
+	 */
 	public ConcurrentArrayList() {
 		super();
 	}
 	
+	/**
+	 * Creates a new ConcurrentArrayList containing the contents of the given collection
+	 * The Collection interface iterator functions return iterators synchronized to the underlying list 
+	 * @param arg0 the collection to copy into the new list
+	 */
 	public ConcurrentArrayList(Collection<? extends E> arg0) {
 		super(arg0);
 	}
 	
+	/**
+	 * Creates a new, empty ConcurrentArrayList with the given starting capacity
+	 * The Collection interface iterator functions return iterators synchronized to the underlying list
+	 * @param capacity the starting capacity of the list 
+	 */
 	public ConcurrentArrayList(int capacity) {
 		super(capacity);
+	}
+	
+	/**
+	 * Creates a new, empty ConcurrentArrayList
+	 * @param snapshot should the Collection interface iterator functions return CopiedIterators/CopiedListIterators
+	 */
+	public ConcurrentArrayList(boolean snapshot) {
+		this();
+		this.snapshot = snapshot;
+	}
+	
+	/**
+	 * Creates a new ConcurrentArrayList containing the contents of the given collection
+	 * @param arg0 the collection to copy into the new list
+	 * @param snapshot should the Collection interface iterator functions return CopiedIterators/CopiedListIterators
+	 */
+	public ConcurrentArrayList(Collection<? extends E> arg0, boolean snapshot) {
+		this(arg0);
+		this.snapshot = snapshot;
+	}
+	
+	/**
+	 * Creates a new, empty ConcurrentArrayList with the given starting capacity
+	 * @param capacity the starting capacity of the list 
+	 * @param snapshot should the Collection interface iterator functions return CopiedIterators/CopiedListIterators
+	 */
+	public ConcurrentArrayList(int capacity, boolean snapshot) {
+		this(capacity);
+		this.snapshot = snapshot;
 	}
 	
 	@Override
@@ -340,16 +384,111 @@ public class ConcurrentArrayList<E> extends ArrayList<E> {
 	
 	@Override
 	public Iterator<E> iterator() {
+		return snapshot ? new CopiedIterator<>(this) : new Itr();
+	}
+	
+	public CopiedIterator<E> copiedIterator() {
 		return new CopiedIterator<>(this);
+	}
+	
+	public Iterator<E> syncedIterator() {
+		return new Itr();
 	}
 	
 	@Override
 	public ListIterator<E> listIterator() {
-		return new CopiedListIterator<>(this);
+		return snapshot ? new CopiedListIterator<>(this) : new ListItr();
 	}
 	
 	@Override
 	public ListIterator<E> listIterator(int index) {
+		return snapshot ? new CopiedListIterator<>(this, index) : new ListItr(index);
+	}
+	
+	public ListIterator<E> copiedListIterator() {
+		return new CopiedListIterator<>(this);
+	}
+	
+	public ListIterator<E> copiedListIterator(int index) {
 		return new CopiedListIterator<>(this, index);
+	}
+	
+	public ListIterator<E> syncedListIterator() {
+		return new ListItr();
+	}
+	
+	public ListIterator<E> syncedListIterator(int index) {
+		return new ListItr(index);
+	}
+	
+	private class Itr implements Iterator<E> {
+		private int pointer = 0;
+		
+		@Override
+		public boolean hasNext() {
+			return pointer < size();
+		}
+
+		@Override
+		public E next() {
+			return get(pointer++);
+		}
+	}
+	
+	private class ListItr implements ListIterator<E> {
+		private int pointer;
+		
+		public ListItr() {
+			pointer = 0;
+		}
+		
+		public ListItr(int index) {
+			pointer = index;
+		}
+		
+		@Override
+		public boolean hasNext() {
+			return pointer < size();
+		}
+
+		@Override
+		public E next() {
+			return get(pointer++);
+		}
+
+		@Override
+		public boolean hasPrevious() {
+			return pointer > 0 && pointer <= size();
+		}
+
+		@Override
+		public E previous() {
+			return get(pointer--);
+		}
+
+		@Override
+		public int nextIndex() {
+			return hasNext() ? pointer + 1 : size();
+		}
+
+		@Override
+		public int previousIndex() {
+			return hasPrevious() ? pointer - 1: -1;
+		}
+
+		@Override
+		public void remove() {
+			ConcurrentArrayList.this.remove(pointer);
+		}
+
+		@Override
+		public void set(E e) {
+			ConcurrentArrayList.this.set(pointer, e);
+		}
+
+		@Override
+		public void add(E e) {
+			ConcurrentArrayList.this.add(pointer, e);
+		}
 	}
 }
